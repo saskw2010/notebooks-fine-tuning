@@ -1,78 +1,87 @@
-# MK7 Native MoE Streaming v0
+# MK7 Native MoE Streaming Prototype
 
-A minimal research prototype for a **native sparse MoE built with streaming in mind from day one**.
+This experiment explores a native sparse Mixture-of-Experts language model designed from the start around a streamable expert boundary.
 
-## What this proves
+## Current architecture
 
-- 8 routed experts with **Top-2** token routing.
-- SwiGLU experts.
-- Router receives gradients during training.
-- Auxiliary load-balancing loss and routing metrics.
-- Capacity limit and dropped-assignment accounting.
-- Explicit `ExpertStore` abstraction separating MoE semantics from weight residency.
-- File-backed expert store with lazy loading and a bounded LRU resident cache.
+- Causal Transformer language model
+- RMSNorm + causal self-attention
+- SwiGLU feed-forward experts
+- configurable sparse Top-k routing
+- default research shape: 8 experts / Top-2
+- router load-balancing auxiliary loss
+- capacity/drop accounting and expert-load metrics
+- `ExpertStore` abstraction for future tiered residency
+- file-backed lazy expert loading with bounded LRU cache
 
-This is deliberately a correctness-first reference implementation, not an optimized inference runtime.
+## Presets
 
-## Smoke test
+### `smoke`
+
+Correctness-only configuration for local CPU/GPU validation.
+
+Approximate parameter report:
+
+- 548,064 total parameters
+- 326,880 active parameters/token
+- 4 experts / Top-2
+
+Local validation: forward, backward, router gradients and language-model loss all pass. In a 3-step CPU smoke the loss moved from roughly 5.57 to 5.41. This is only a correctness signal, not a quality benchmark.
+
+### `research-30m`
+
+First real research-scale target suitable for a free/low-cost notebook GPU before scaling toward billion-parameter capacity.
+
+Approximate parameter report:
+
+- 28,697,760 total parameters
+- 8,791,200 active parameters/token
+- 8 experts / Top-2
+- 6 Transformer layers
+- d_model 288
+- expert hidden size 640
+- sequence length 256
+
+The point of this preset is to validate stable routing and learning dynamics while keeping the full model small enough to iterate quickly.
+
+## Run locally
 
 ```bash
-pip install torch
 cd experiments/mk7_native_moe
-python smoke.py
+python train_lm.py --preset smoke --steps 20 --batch-size 4
 ```
 
-Expected result:
+For a GPU:
+
+```bash
+python train_lm.py --preset research-30m --steps 100 --batch-size 2
+```
+
+A ready-to-run `colab_kaggle.ipynb` is included for Google Colab or Kaggle.
+
+## Streaming boundary
+
+Training currently uses resident PyTorch experts so gradients remain straightforward. The MoE layer is deliberately separated from expert residency through `ExpertStore`. The existing file-backed store proves that selected experts can be loaded lazily and bounded by an LRU cache.
+
+The intended inference evolution is:
 
 ```text
-TRAINING SMOKE: PASS
-FILE-STREAMING SMOKE: PASS
+router -> expert IDs -> tier manager -> VRAM / RAM / NVMe -> selected experts
 ```
 
-The initial validated local run used 8 experts / Top-2 and reported approximately 1.18M total parameters vs 0.296M active parameters per token in the tiny smoke configuration. That small shape is only for fast correctness testing.
+This follows the same broad systems idea as Colibri-style expert streaming without coupling the model definition to one runtime.
 
-## Architecture boundary
+## Next gates
 
-```text
-Transformer shared/resident trunk
-          |
-       Top-K router
-          |
-   +------+------+---- ...
-   |      |      |
- Expert Expert Expert        <- separately addressable weights
-   |      |      |
-   +------+------+----------- weighted combine
-          |
-       next layer
-```
+1. Run `research-30m` for a meaningful token budget on GPU.
+2. Track per-layer expert utilization, entropy and dropped assignments over time.
+3. Add validation loss and checkpoint/resume.
+4. Add safer expert serialization (safetensors) and immutable expert shards.
+5. Add VRAM/RAM/NVMe residency manager and async prefetch for inference.
+6. Quantize experts independently (int8, then int4 experiments).
+7. Define/export a Colibri-compatible or Colibri-inspired expert manifest.
+8. Scale only after router stability is demonstrated; target architecture remains roughly 1.5-3B total with 300-500M active/token.
 
-`ExpertStore` is the key boundary. During training, experts remain normal PyTorch modules. During inference, the same routed MoE layer can obtain an expert from another residency policy. `TorchFileExpertStore` is the first proof: experts are stored as individual files and loaded only when routed, with an LRU cache limiting resident experts.
+## Important distinction
 
-## Target direction — not instantiated yet
-
-The research target is **not** a 300–400M-total dense-like model. The interesting regime is a larger total capacity with much smaller active compute, for example:
-
-- total model capacity: ~1.5–3B parameters
-- active parameters/token: ~300–500M
-- experts: 8 initially, then 16
-- routing: Top-2
-- shared/resident attention/trunk
-- routed FFN experts individually quantizable and streamable
-- optional domain LoRA/adapters *inside or above experts*, without making adapters the primary MoE mechanism
-
-The exact parameter budget must be derived from the full transformer shape; `SparseMoE.parameter_report()` currently reports the MoE block itself and should not be mistaken for a full-model active-parameter estimate.
-
-## Next milestones
-
-1. Wrap `SparseMoE` into a small causal Transformer LM and train it on a tiny synthetic/text corpus.
-2. Add router diagnostics: expert utilization, imbalance, token drop rate, route stability and expert co-occurrence.
-3. Add shared expert support and compare Top-1 vs Top-2.
-4. Replace `.pt` proof files with safe tensor shards and explicit metadata.
-5. Add residency tiers (VRAM / RAM / NVMe), asynchronous prefetch and cache-hit metrics.
-6. Benchmark in-memory vs streamed experts and identify the I/O break-even point.
-7. Only after correctness and routing stability: quantize routed experts to int4/int8 and build a Colibri-compatible/export path.
-
-## Important caveat
-
-Streaming is useful only when non-resident expert capacity is large enough to justify I/O. For a model that is only ~300–400M parameters total, keeping the whole model resident is normally simpler and faster. The design objective is therefore **small active compute with larger sparse total capacity**, not streaming for its own sake.
+Expert streaming is primarily an inference/runtime technique. Sparse MoE is the model architecture. We are designing the model so the two fit together from the beginning, but we should not train by repeatedly paging trainable experts from NVMe until the training semantics and optimizer-state strategy are explicitly designed for that case.
