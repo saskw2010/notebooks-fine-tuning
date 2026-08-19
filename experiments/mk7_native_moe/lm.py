@@ -28,8 +28,8 @@ class LMConfig:
         presets = {
             "smoke": cls(max_seq_len=64, d_model=96, n_heads=4, n_layers=2,
                          n_experts=4, top_k=2, expert_hidden=192, dense_hidden=192),
-            "research-30m": cls(max_seq_len=256, d_model=384, n_heads=6, n_layers=8,
-                                n_experts=8, top_k=2, expert_hidden=1024, dense_hidden=1024),
+            "research-30m": cls(max_seq_len=256, d_model=288, n_heads=6, n_layers=6,
+                                n_experts=8, top_k=2, expert_hidden=640, dense_hidden=640),
         }
         if name not in presets:
             raise ValueError(f"unknown preset {name}; choose {list(presets)}")
