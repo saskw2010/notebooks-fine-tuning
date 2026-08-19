@@ -44,7 +44,6 @@ jobs:
           mkdir -p .kaggle_mk7
 
           cat > .kaggle_mk7/runner.py <<PY
-          import os
           import pathlib
           import subprocess
           import sys
@@ -71,6 +70,7 @@ jobs:
           started = time.time()
           try:
               run(["nvidia-smi"])
+              run([sys.executable, "-c", "import torch; print('torch', torch.__version__); print('cuda', torch.cuda.is_available()); print('gpu', torch.cuda.get_device_name(0)); print('cc', torch.cuda.get_device_capability(0)); assert torch.cuda.get_device_capability(0)[0] >= 7, 'GPU compute capability < 7.0 is unsupported by current Kaggle PyTorch image'"])
               run(["git", "clone", "--no-checkout", REPO, str(ROOT)])
               run(["git", "fetch", "origin", SHA, "--depth", "1"], cwd=ROOT)
               run(["git", "checkout", "--detach", SHA], cwd=ROOT)
@@ -97,6 +97,7 @@ jobs:
             "is_private": "true",
             "enable_gpu": "true",
             "enable_internet": "true",
+            "machine_shape": "NvidiaTeslaT4",
             "dataset_sources": [],
             "competition_sources": [],
             "kernel_sources": [],
@@ -104,11 +105,11 @@ jobs:
           }
           JSON
 
-      - name: Push and run on Kaggle P100
+      - name: Push and run on Kaggle T4
         shell: bash
         run: |
           set -euo pipefail
-          kaggle kernels push -p .kaggle_mk7 --accelerator NvidiaTeslaP100 --timeout 3600
+          kaggle kernels push -p .kaggle_mk7 --accelerator NvidiaTeslaT4 --timeout 3600
 
       - name: Wait for Kaggle run
         shell: bash
