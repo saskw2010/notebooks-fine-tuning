@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MK7 Native MoE — Research Story</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;line-height:1.65;color:#18212b;background:#fafafa}
+  h1,h2,h3{line-height:1.25;color:#0f1720} h1{font-size:2.2rem;margin-bottom:.3rem}
+  .sub{color:#5b6570;margin-bottom:2rem}.card{background:white;border:1px solid #dde3e8;border-radius:14px;padding:20px;margin:18px 0}
+  .ok{border-left:5px solid #248a3d}.note{border-left:5px solid #a06a00}.risk{border-left:5px solid #a93636}
+  code,pre{font-family:Consolas,monospace;background:#f1f3f5}code{padding:2px 5px;border-radius:4px}pre{padding:14px;overflow:auto;border-radius:9px}
+  table{width:100%;border-collapse:collapse;background:white;margin:16px 0}th,td{border:1px solid #d9dfe5;padding:10px;text-align:left;vertical-align:top}th{background:#eef2f5}
+  .tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#e8eef4;margin-right:6px;font-size:.85rem}
+  a{color:#075cad}
+</style>
+</head>
+<body>
+<h1>MK7 Native MoE — Research Story</h1>
+<div class="sub">From large-model expert streaming experiments to a native sparse MoE designed for local inference.</div>
+
+<div class="card ok">
+<h2>1. Why this experiment exists</h2>
+<p>The starting observation came from running very large sparse models through Colibrì-style expert streaming: a model can be much larger than local VRAM if only the routed experts are fetched when needed. The useful idea was not merely “offload a huge model”; it was to ask whether a model could be <strong>designed from the beginning</strong> so its architecture and runtime cooperate with tiered expert residency.</p>
+<p>That led to the MK7 Native MoE experiment: a causal Transformer with routed feed-forward experts, a streamable expert boundary, and an explicit long-term goal of separating <em>total capacity</em> from <em>active compute per token</em>.</p>
+</div>
+
+<div class="card">
+<h2>2. Architectural thesis</h2>
+<pre>token
+  ↓
+causal attention / shared trunk
+  ↓
+router
+  ↓ Top-2
+selected experts
+  ↓
+merge
+  ↓
+next layer / logits</pre>
+<p>For inference, the intended residency path is:</p>
+<pre>router → expert IDs → tier manager → VRAM / RAM / NVMe → selected experts</pre>
+<p>The important distinction is that <strong>sparse MoE is the model architecture</strong>, while <strong>expert streaming is an inference/runtime technique</strong>. The model is being shaped so the two can fit together, without making training depend on NVMe paging.</p>
+</div>
+
+<div class="card ok">
+<h2>3. What has actually been implemented</h2>
+<ul>
+<li>Causal Transformer language model.</li>
+<li>RMSNorm and causal self-attention.</li>
+<li>SwiGLU feed-forward experts.</li>
+<li>Configurable sparse Top-k router.</li>
+<li>Research default: 8 experts, Top-2.</li>
+<li>Router load-balancing auxiliary loss.</li>
+<li>Capacity/drop accounting and expert-load metrics.</li>
+<li><code>ExpertStore</code> abstraction.</li>
+<li>File-backed lazy expert loading with bounded LRU cache as a proof of the streamable boundary.</li>
+<li>Kaggle/Colab runnable notebook and GitHub→Kaggle automation work.</li>
+</ul>
+</div>
+
+<div class="card ok">
+<h2>4. First real GPU validation — Kaggle T4</h2>
+<p>The first research-scale preset was:</p>
+<table>
+<tr><th>Item</th><th>Value</th></tr>
+<tr><td>Total parameters</td><td>28,697,760</td></tr>
+<tr><td>Approx. active parameters/token</td><td>8,791,200</td></tr>
+<tr><td>Experts</td><td>8</td></tr>
+<tr><td>Routing</td><td>Top-2</td></tr>
+<tr><td>Transformer layers</td><td>6</td></tr>
+<tr><td>d_model</td><td>288</td></tr>
+<tr><td>Expert hidden size</td><td>640</td></tr>
+<tr><td>Sequence length</td><td>256</td></tr>
+</table>
+<p>The successful 100-step run used a Tesla T4. The loss moved from <strong>5.6069</strong> at step 1 to <strong>1.2943</strong> at step 100. LM loss moved from 5.5932 to 1.2836. Router auxiliary loss moved from 1.3771 to 1.0656. Dropped assignments fell from 2391 to 440. All eight experts continued receiving traffic.</p>
+<p><strong>Interpretation:</strong> this is an architecture/routing validation, not a language-quality benchmark. The corpus used for this run was intentionally tiny and repetitive, so the falling loss mostly proves that the end-to-end sparse model learns and that the router does not immediately collapse.</p>
+</div>
+
+<div class="card note">
+<h2>5. Hardware lesson learned</h2>
+<p>Kaggle's current PyTorch image rejected Tesla P100 execution because the installed build supported CUDA compute capability <code>sm_70+</code>, while P100 is <code>sm_60</code>. The same experiment then succeeded on Tesla T4 (<code>sm_75</code>). This was an environment compatibility issue, not an MoE failure.</p>
+</div>
+
+<div class="card">
+<h2>6. Current target</h2>
+<p>The longer-term target remains approximately:</p>
+<pre>1.5–3B total parameters
+300–500M active parameters/token
+8–16 routed experts
+Top-2 routing
+optional shared experts
+quantized experts
+streamable expert residency
+optional LoRA/adapters on top of experts</pre>
+<p>The central objective is not to make a 300–500M total model. It is to build a model whose <strong>active compute is in that range while total representational capacity is substantially larger</strong>.</p>
+</div>
+
+<div class="card note">
+<h2>7. Research note — PrismML Bonsai 27B</h2>
+<p><span class="tag">external research</span><span class="tag">low-bit models</span></p>
+<p>PrismML announced Bonsai 27B in July 2026, based on Qwen3.6 27B, with binary and ternary variants. PrismML reports a 1-bit/binary variant at about <strong>3.9 GB</strong> and a ternary variant at about <strong>5.9 GB</strong>. The company reports 1.125 effective bits/weight for the binary model and 1.71 effective bits/weight for the ternary model, with benchmark retention reported relative to the FP16 baseline.</p>
+<p>PrismML also describes the family as supporting multimodal input, tool use, reasoning/agentic workflows and long context. These are vendor-reported results and should be independently reproduced before using them as engineering assumptions.</p>
+<h3>Why Bonsai matters to MK7</h3>
+<p>Bonsai attacks the local-inference problem from a different axis:</p>
+<pre>Colibrì / MK7 streaming idea → reduce resident weights by loading only selected experts
+Bonsai idea                 → reduce bytes per weight extremely aggressively</pre>
+<p>The interesting research direction is their combination. If routed experts can be trained or converted to binary/ternary representations while router/shared components retain higher precision, total local capacity could grow dramatically before NVMe traffic becomes the dominant bottleneck.</p>
+<h3>Questions to test later</h3>
+<ul>
+<li>Can expert FFNs tolerate 1–2 bit weights better than attention/router components?</li>
+<li>Should the router remain FP16/BF16 while experts become ternary/binary?</li>
+<li>What is the real runtime RAM/VRAM footprint, not only file/weight size?</li>
+<li>What kernels are required for low-bit speedups, and do they work on commodity GPUs/CPUs/mobile NPUs?</li>
+<li>Does extreme low-bit compression damage expert specialization or routing stability?</li>
+</ul>
+<p>Source: <a href="https://prismml.com/news/bonsai-27b">PrismML — Bonsai 27B announcement</a>.</p>
+</div>
+
+<div class="card note">
+<h2>8. Research note — AllenAI olmOCR</h2>
+<p><span class="tag">external research</span><span class="tag">document intelligence</span><span class="tag">training data</span></p>
+<p>olmOCR is AllenAI's open-source toolkit for converting PDFs and image-based documents into clean, naturally ordered text/Markdown for LLM datasets and downstream processing. The project handles complex layouts, tables, equations, handwriting, headers/footers, multi-column pages and reading-order reconstruction.</p>
+<p>The original olmOCR work used a fine-tuned 7B vision-language model and released weights, data, training code and inference tooling. The later olmOCR 2 work uses reinforcement learning with verifiable rewards derived from unit tests generated from synthetic documents with known structure. AllenAI reports especially strong improvements on equations, tables and multi-column layouts.</p>
+<h3>Why olmOCR matters to MK7</h3>
+<p>olmOCR is not a competing MoE runtime. Its relevance is upstream: <strong>high-quality document linearization can become part of the data factory used to train or distill domain experts</strong>.</p>
+<pre>PDF / scan / image
+      ↓
+olmOCR-style document linearization
+      ↓
+clean Markdown / structured text
+      ↓
+filter + deduplicate + chunk + labels
+      ↓
+teacher expansion / synthetic QA / tool traces
+      ↓
+expert-specific training datasets
+      ↓
+MK7 experts + router training</pre>
+<p>This is especially relevant for ERP manuals, policies, invoices, technical documents, Arabic business content and other document-heavy domains. The real value is not “OCR text extraction” alone; it is producing training-grade representations with reading order and structure preserved.</p>
+<h3>Possible integration experiments</h3>
+<ul>
+<li>Use olmOCR output as one ingestion path for expert datasets.</li>
+<li>Evaluate Arabic and mixed Arabic/English documents separately; olmOCR's published benchmark emphasis is primarily English, so Arabic quality must be measured rather than assumed.</li>
+<li>Generate routing labels from document type/domain metadata.</li>
+<li>Train a document expert and compare it against RAG-only use of the same extracted corpus.</li>
+<li>Reuse the unit-test/reward idea from olmOCR 2 for verifiable structured-output training in ERP/document tasks.</li>
+</ul>
+<p>Sources: <a href="https://github.com/allenai/olmocr">AllenAI olmOCR repository</a>, <a href="https://arxiv.org/abs/2502.18443">olmOCR paper</a>, and <a href="https://arxiv.org/abs/2510.19817">olmOCR 2 paper</a>.</p>
+</div>
+
+<div class="card risk">
+<h2>9. What is proven vs. what is not</h2>
+<table>
+<tr><th>Status</th><th>Claim</th></tr>
+<tr><td>Proven in our experiment</td><td>Native sparse Top-2 MoE trains end-to-end on GPU; router receives gradients; all experts remain active in the 30M smoke; file-backed expert loading boundary works in the prototype.</td></tr>
+<tr><td>Not yet proven</td><td>Language quality, long-run routing stability, generalization, expert specialization, expert parallelism, int4/int8/binary/ternary expert quality, real NVMe streaming throughput, Colibrì compatibility.</td></tr>
+<tr><td>External/vendor reported</td><td>Bonsai 27B memory/benchmark claims.</td></tr>
+<tr><td>External/open research</td><td>olmOCR document-linearization and RLVR/unit-test methodology.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>10. Next research gates</h2>
+<ol>
+<li>Replace the toy corpus with a real train/validation dataset.</li>
+<li>Add checkpoint/resume and validation loss.</li>
+<li>Record router entropy, per-layer utilization, dropped-token rate, tokens/s and VRAM.</li>
+<li>Run a longer 30M baseline before scaling.</li>
+<li>Scale to roughly 100M and then ~300M only if routing remains stable.</li>
+<li>Use the second T4 for expert-parallel experiments rather than simple data parallelism.</li>
+<li>Add safetensors expert shards and a VRAM/RAM/NVMe tier manager for inference.</li>
+<li>Compare int8, int4 and later binary/ternary expert compression.</li>
+<li>Build a document-data pipeline with an olmOCR ingestion path.</li>
+</ol>
+</div>
+
+<p class="sub">Document status: research log. Experimental measurements are separated from external claims and future hypotheses.</p>
+</body>
+</html>
