@@ -1,0 +1,36 @@
+version: 0.1
+project: MK7NMoE
+domain: cybersecurity
+sources:
+  - source_id: nist_csf_2_0
+    authority: NIST
+    title: The NIST Cybersecurity Framework (CSF) 2.0
+    url: https://www.nist.gov/publications/nist-cybersecurity-framework-csf-20
+    source_family: nist
+    scope: governance_risk_management
+    language: en
+    provenance_status: authoritative
+  - source_id: owasp_top10_2021
+    authority: OWASP
+    title: OWASP Top 10:2021
+    url: https://owasp.org/Top10/2021/
+    source_family: owasp
+    scope: application_security
+    language: en
+    provenance_status: authoritative
+  - source_id: owasp_top10_2021_ar
+    authority: OWASP
+    title: OWASP Top 10:2021 Arabic
+    url: https://owasp.org/Top10/2021/ar/
+    source_family: owasp
+    scope: application_security
+    language: ar
+    provenance_status: authoritative
+  - source_id: cisa_ztmm_v2
+    authority: CISA
+    title: Zero Trust Maturity Model Version 2.0
+    url: https://www.cisa.gov/sites/default/files/2023-04/CISA_Zero_Trust_Maturity_Model_Version_2_508c.pdf
+    source_family: cisa
+    scope: zero_trust
+    language: en
+    provenance_status: authoritative
