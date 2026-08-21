@@ -1,0 +1,498 @@
+version: 0.1
+project: MK7NMoE
+science_id: cybersecurity
+science_name: Cybersecurity
+scope: defensive_and_educational
+purpose: >-
+  Machine-readable science tree for curriculum coverage, dataset generation,
+  teacher expansion, validation, and router/expert telemetry. Domain labels are
+  metadata for analysis; they must not hard-route tokens to experts.
+
+metadata_schema:
+  required_fields:
+    - science
+    - discipline
+    - topic
+    - concept
+    - aki_type
+    - task_type
+    - source_id
+    - provenance
+    - synthetic
+    - verified
+  optional_fields:
+    - difficulty
+    - language
+    - prerequisites
+    - learning_objective
+    - quality_score
+    - safety_scope
+
+aki_types:
+  - definition
+  - fact
+  - principle
+  - mechanism
+  - procedure
+  - comparison
+  - failure_mode
+  - diagnostic_signal
+  - mitigation
+  - policy_rule
+  - tool_semantics
+  - scenario
+
+task_types:
+  - explain
+  - qa
+  - compare
+  - classify
+  - reason
+  - sequence_steps
+  - detect_error
+  - diagnose
+  - choose_mitigation
+  - structured_output
+  - tool_call
+  - summarize
+  - generate_checklist
+  - evaluate_claim
+
+science_tree:
+  - discipline_id: foundations
+    name: Security Foundations
+    topics:
+      - topic_id: cia_and_risk
+        name: CIA Triad and Risk
+        concepts:
+          - concept_id: confidentiality
+            name: Confidentiality
+            learning_objectives:
+              - distinguish confidentiality from privacy and secrecy
+              - identify controls that protect confidentiality
+            aki_types: [definition, principle, scenario, mitigation]
+          - concept_id: integrity
+            name: Integrity
+            learning_objectives:
+              - explain data integrity and unauthorized modification
+              - distinguish integrity controls from availability controls
+            aki_types: [definition, principle, scenario, mitigation]
+          - concept_id: availability
+            name: Availability
+            learning_objectives:
+              - explain availability and resilience
+              - identify single points of failure
+            aki_types: [definition, principle, failure_mode, mitigation]
+          - concept_id: risk_model
+            name: Threat, Vulnerability, Likelihood, Impact, Risk
+            learning_objectives:
+              - distinguish threat, vulnerability, exploit, exposure, and risk
+              - reason about qualitative risk
+            aki_types: [definition, comparison, principle, scenario]
+      - topic_id: security_controls
+        name: Security Controls
+        concepts:
+          - concept_id: preventive_detective_corrective
+            name: Preventive, Detective, Corrective Controls
+            aki_types: [definition, comparison, scenario]
+          - concept_id: administrative_technical_physical
+            name: Administrative, Technical, Physical Controls
+            aki_types: [definition, comparison, scenario]
+          - concept_id: defense_in_depth
+            name: Defense in Depth
+            aki_types: [principle, mechanism, scenario, mitigation]
+          - concept_id: least_privilege
+            name: Least Privilege
+            aki_types: [principle, procedure, failure_mode, mitigation]
+          - concept_id: zero_trust
+            name: Zero Trust Principles
+            aki_types: [principle, comparison, scenario]
+
+  - discipline_id: identity_access
+    name: Identity and Access Management
+    topics:
+      - topic_id: authentication
+        name: Authentication
+        concepts:
+          - concept_id: factors
+            name: Authentication Factors
+            aki_types: [definition, comparison, scenario]
+          - concept_id: mfa
+            name: Multi-Factor Authentication
+            aki_types: [principle, mechanism, failure_mode, mitigation]
+          - concept_id: password_storage
+            name: Password Storage and Hashing
+            aki_types: [principle, mechanism, failure_mode, mitigation]
+      - topic_id: authorization
+        name: Authorization
+        concepts:
+          - concept_id: rbac
+            name: Role-Based Access Control
+            aki_types: [definition, mechanism, scenario, policy_rule]
+          - concept_id: abac
+            name: Attribute-Based Access Control
+            aki_types: [definition, mechanism, comparison, policy_rule]
+          - concept_id: access_review
+            name: Access Reviews and Recertification
+            aki_types: [procedure, policy_rule, failure_mode]
+      - topic_id: privileged_access
+        name: Privileged Access Management
+        concepts:
+          - concept_id: privileged_accounts
+            name: Privileged Accounts
+            aki_types: [definition, failure_mode, mitigation]
+          - concept_id: just_in_time_access
+            name: Just-in-Time Privilege
+            aki_types: [principle, mechanism, procedure]
+
+  - discipline_id: network_security
+    name: Network Security
+    topics:
+      - topic_id: network_fundamentals
+        name: Network Security Fundamentals
+        concepts:
+          - concept_id: segmentation
+            name: Network Segmentation
+            aki_types: [principle, mechanism, scenario, mitigation]
+          - concept_id: firewall_policy
+            name: Firewall Policy Concepts
+            aki_types: [definition, policy_rule, scenario, diagnostic_signal]
+          - concept_id: secure_protocols
+            name: Secure Protocol Selection
+            aki_types: [comparison, principle, failure_mode]
+      - topic_id: monitoring
+        name: Network Monitoring
+        concepts:
+          - concept_id: ids_ips
+            name: IDS and IPS
+            aki_types: [definition, comparison, diagnostic_signal, scenario]
+          - concept_id: network_telemetry
+            name: Flows, Logs, and Packet Metadata
+            aki_types: [definition, tool_semantics, diagnostic_signal]
+          - concept_id: anomaly_detection
+            name: Network Anomaly Detection
+            aki_types: [principle, diagnostic_signal, failure_mode]
+
+  - discipline_id: endpoint_security
+    name: Endpoint and Host Security
+    topics:
+      - topic_id: hardening
+        name: System Hardening
+        concepts:
+          - concept_id: patching
+            name: Patch and Update Management
+            aki_types: [procedure, failure_mode, mitigation]
+          - concept_id: service_reduction
+            name: Disable Unnecessary Services
+            aki_types: [principle, procedure, mitigation]
+          - concept_id: secure_configuration
+            name: Secure Baselines
+            aki_types: [procedure, policy_rule, comparison]
+      - topic_id: endpoint_detection
+        name: Endpoint Detection and Response
+        concepts:
+          - concept_id: edr_telemetry
+            name: EDR Telemetry
+            aki_types: [definition, diagnostic_signal, tool_semantics]
+          - concept_id: behavioral_detection
+            name: Behavioral Detection
+            aki_types: [principle, diagnostic_signal, scenario]
+
+  - discipline_id: application_security
+    name: Application Security
+    topics:
+      - topic_id: secure_sdlc
+        name: Secure Software Development Lifecycle
+        concepts:
+          - concept_id: threat_modeling
+            name: Threat Modeling
+            aki_types: [procedure, principle, scenario]
+          - concept_id: code_review
+            name: Security Code Review
+            aki_types: [procedure, diagnostic_signal, mitigation]
+          - concept_id: dependency_risk
+            name: Dependency and Supply Chain Risk
+            aki_types: [failure_mode, diagnostic_signal, mitigation]
+      - topic_id: web_security
+        name: Web Application Security
+        concepts:
+          - concept_id: input_validation
+            name: Input Validation
+            aki_types: [principle, failure_mode, mitigation]
+          - concept_id: output_encoding
+            name: Output Encoding
+            aki_types: [principle, failure_mode, mitigation]
+          - concept_id: session_management
+            name: Session Management
+            aki_types: [mechanism, failure_mode, mitigation]
+          - concept_id: access_control_failures
+            name: Broken Access Control
+            aki_types: [failure_mode, diagnostic_signal, mitigation]
+
+  - discipline_id: cryptography
+    name: Applied Cryptography
+    topics:
+      - topic_id: cryptographic_primitives
+        name: Cryptographic Primitives
+        concepts:
+          - concept_id: symmetric_encryption
+            name: Symmetric Encryption
+            aki_types: [definition, mechanism, comparison]
+          - concept_id: asymmetric_encryption
+            name: Asymmetric Encryption
+            aki_types: [definition, mechanism, comparison]
+          - concept_id: hashing
+            name: Cryptographic Hashing
+            aki_types: [definition, mechanism, comparison]
+          - concept_id: digital_signatures
+            name: Digital Signatures
+            aki_types: [definition, mechanism, scenario]
+      - topic_id: key_management
+        name: Key Management
+        concepts:
+          - concept_id: key_lifecycle
+            name: Key Lifecycle
+            aki_types: [procedure, policy_rule, failure_mode]
+          - concept_id: key_rotation
+            name: Key Rotation
+            aki_types: [procedure, mitigation, policy_rule]
+
+  - discipline_id: cloud_security
+    name: Cloud Security
+    topics:
+      - topic_id: shared_responsibility
+        name: Shared Responsibility
+        concepts:
+          - concept_id: provider_customer_boundary
+            name: Provider vs Customer Responsibility
+            aki_types: [principle, comparison, scenario]
+      - topic_id: cloud_identity
+        name: Cloud IAM
+        concepts:
+          - concept_id: service_identity
+            name: Workload and Service Identities
+            aki_types: [definition, mechanism, failure_mode]
+          - concept_id: permission_scope
+            name: Permission Scope and Least Privilege
+            aki_types: [principle, policy_rule, scenario]
+      - topic_id: cloud_posture
+        name: Cloud Security Posture
+        concepts:
+          - concept_id: misconfiguration
+            name: Cloud Misconfiguration
+            aki_types: [failure_mode, diagnostic_signal, mitigation]
+          - concept_id: logging
+            name: Cloud Audit Logging
+            aki_types: [tool_semantics, diagnostic_signal, procedure]
+
+  - discipline_id: data_security
+    name: Data Security and Privacy Engineering
+    topics:
+      - topic_id: data_lifecycle
+        name: Data Lifecycle
+        concepts:
+          - concept_id: classification
+            name: Data Classification
+            aki_types: [definition, policy_rule, scenario]
+          - concept_id: retention
+            name: Data Retention
+            aki_types: [policy_rule, procedure, failure_mode]
+          - concept_id: secure_disposal
+            name: Secure Disposal
+            aki_types: [procedure, mitigation]
+      - topic_id: data_protection
+        name: Data Protection
+        concepts:
+          - concept_id: encryption_at_rest
+            name: Encryption at Rest
+            aki_types: [mechanism, mitigation, failure_mode]
+          - concept_id: encryption_in_transit
+            name: Encryption in Transit
+            aki_types: [mechanism, mitigation, failure_mode]
+          - concept_id: tokenization_masking
+            name: Tokenization and Masking
+            aki_types: [definition, comparison, scenario]
+
+  - discipline_id: detection_response
+    name: Detection, Incident Response, and Forensics
+    topics:
+      - topic_id: logging_detection
+        name: Logging and Detection Engineering
+        concepts:
+          - concept_id: log_sources
+            name: Security Log Sources
+            aki_types: [definition, diagnostic_signal, tool_semantics]
+          - concept_id: detection_rule
+            name: Detection Rule Design
+            aki_types: [principle, procedure, failure_mode]
+          - concept_id: false_positives
+            name: False Positives and Tuning
+            aki_types: [definition, diagnostic_signal, mitigation]
+      - topic_id: incident_response
+        name: Incident Response
+        concepts:
+          - concept_id: preparation
+            name: Preparation
+            aki_types: [procedure, checklist, policy_rule]
+          - concept_id: identification
+            name: Identification and Triage
+            aki_types: [procedure, diagnostic_signal, scenario]
+          - concept_id: containment
+            name: Containment
+            aki_types: [procedure, mitigation, scenario]
+          - concept_id: eradication_recovery
+            name: Eradication and Recovery
+            aki_types: [procedure, mitigation, scenario]
+          - concept_id: lessons_learned
+            name: Post-Incident Review
+            aki_types: [procedure, evaluate_claim, policy_rule]
+      - topic_id: digital_forensics
+        name: Digital Forensics Fundamentals
+        concepts:
+          - concept_id: evidence_integrity
+            name: Evidence Integrity and Chain of Custody
+            aki_types: [principle, procedure, policy_rule]
+          - concept_id: timeline_analysis
+            name: Timeline Analysis
+            aki_types: [procedure, diagnostic_signal, scenario]
+
+  - discipline_id: vulnerability_management
+    name: Vulnerability and Exposure Management
+    topics:
+      - topic_id: lifecycle
+        name: Vulnerability Management Lifecycle
+        concepts:
+          - concept_id: discovery
+            name: Asset and Vulnerability Discovery
+            aki_types: [procedure, diagnostic_signal, tool_semantics]
+          - concept_id: prioritization
+            name: Risk-Based Prioritization
+            aki_types: [principle, comparison, scenario]
+          - concept_id: remediation
+            name: Remediation and Compensating Controls
+            aki_types: [procedure, mitigation, scenario]
+          - concept_id: verification
+            name: Remediation Verification
+            aki_types: [procedure, diagnostic_signal]
+
+  - discipline_id: governance_risk_compliance
+    name: Governance, Risk, and Compliance
+    topics:
+      - topic_id: policy_governance
+        name: Security Governance
+        concepts:
+          - concept_id: policy_standard_procedure
+            name: Policy, Standard, Procedure, Guideline
+            aki_types: [definition, comparison, policy_rule]
+          - concept_id: control_ownership
+            name: Control Ownership and Accountability
+            aki_types: [principle, policy_rule, scenario]
+      - topic_id: risk_management
+        name: Risk Management
+        concepts:
+          - concept_id: risk_register
+            name: Risk Register
+            aki_types: [definition, procedure, structured_output]
+          - concept_id: risk_treatment
+            name: Avoid, Mitigate, Transfer, Accept
+            aki_types: [comparison, scenario, policy_rule]
+      - topic_id: assurance
+        name: Security Assurance
+        concepts:
+          - concept_id: audit_evidence
+            name: Audit Evidence
+            aki_types: [definition, procedure, evaluate_claim]
+          - concept_id: control_testing
+            name: Control Testing
+            aki_types: [procedure, diagnostic_signal, structured_output]
+
+  - discipline_id: security_operations
+    name: Security Operations
+    topics:
+      - topic_id: soc_operations
+        name: SOC Operations
+        concepts:
+          - concept_id: alert_triage
+            name: Alert Triage
+            aki_types: [procedure, diagnostic_signal, scenario]
+          - concept_id: escalation
+            name: Escalation Criteria
+            aki_types: [policy_rule, procedure, scenario]
+          - concept_id: case_management
+            name: Case Management
+            aki_types: [procedure, structured_output, policy_rule]
+      - topic_id: threat_intelligence
+        name: Threat Intelligence Fundamentals
+        concepts:
+          - concept_id: indicators_context
+            name: Indicators and Context
+            aki_types: [definition, diagnostic_signal, comparison]
+          - concept_id: intelligence_lifecycle
+            name: Intelligence Lifecycle
+            aki_types: [procedure, principle]
+
+  - discipline_id: human_security
+    name: Human and Organizational Security
+    topics:
+      - topic_id: awareness
+        name: Security Awareness
+        concepts:
+          - concept_id: phishing_awareness
+            name: Phishing Recognition and Reporting
+            aki_types: [diagnostic_signal, scenario, procedure]
+          - concept_id: social_engineering
+            name: Social Engineering Principles
+            aki_types: [definition, scenario, mitigation]
+      - topic_id: insider_risk
+        name: Insider Risk
+        concepts:
+          - concept_id: insider_signals
+            name: Insider Risk Signals
+            aki_types: [diagnostic_signal, scenario, policy_rule]
+          - concept_id: separation_of_duties
+            name: Separation of Duties
+            aki_types: [principle, policy_rule, scenario]
+
+generation_policy:
+  per_concept_minimum_tasks:
+    explain: 2
+    qa: 3
+    compare: 1
+    scenario_reasoning: 2
+    error_detection: 1
+    mitigation: 1
+  language_mix:
+    english: 0.55
+    arabic: 0.25
+    bilingual: 0.20
+  difficulty_mix:
+    foundation: 0.35
+    intermediate: 0.40
+    advanced: 0.25
+  source_policy:
+    require_provenance: true
+    require_deduplication: true
+    synthetic_must_be_tagged: true
+    verification_required_for_eval_split: true
+  split_policy:
+    train: 0.90
+    validation: 0.05
+    test: 0.05
+    split_by_source_family: true
+    prevent_near_duplicate_cross_split: true
+
+router_research_policy:
+  domain_labels_are_metadata_only: true
+  hard_domain_to_expert_mapping: false
+  collect_router_telemetry_by:
+    - science
+    - discipline
+    - topic
+    - task_type
+    - language
+    - difficulty
+  goals:
+    - detect_emergent_specialization
+    - detect_expert_collapse
+    - measure_cross_domain_expert_sharing
+    - compare_router_variants_under_identical_data

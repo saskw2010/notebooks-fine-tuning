@@ -1,0 +1,330 @@
+schema:
+  name: MK7NMoE Science Schema V2
+  version: 2.0.0
+  model: polyhierarchical_knowledge_graph
+  purpose: >-
+    Represent each science, discipline, topic, concept, skill and knowledge atom as a canonical entity
+    that can appear simultaneously in multiple independent classification systems without duplication.
+
+principles:
+  - canonical_entity_once
+  - multiple_taxonomy_memberships
+  - graph_edges_not_tree_only
+  - explicit_prerequisites
+  - provenance_first
+  - evaluation_ready
+  - router_labels_for_analysis_not_forced_routing
+
+entity_types:
+  - science
+  - discipline
+  - subdiscipline
+  - topic
+  - concept
+  - knowledge_atom
+  - learning_objective
+  - skill
+  - reasoning_pattern
+  - task_type
+  - source
+  - taxonomy
+  - taxonomy_node
+
+canonical_entity:
+  required:
+    - id
+    - type
+    - name
+    - aliases
+    - description
+    - memberships
+    - relations
+    - provenance
+  fields:
+    id: stable_global_identifier
+    type: one_of_entity_types
+    name:
+      en: string
+      ar: string_or_null
+    aliases: list
+    description: string
+    scope_notes: list
+    exclusions: list
+    memberships:
+      description: >-
+        A canonical entity may belong to many classification systems at the same time.
+        Membership does not duplicate the entity; it creates a typed graph link to a taxonomy node.
+      item:
+        taxonomy_id: string
+        node_id: string
+        path: list
+        relation: classified_as
+        confidence: float_0_1
+        source: string_or_null
+    relations:
+      item:
+        predicate: relation_type
+        target_id: canonical_entity_id
+        direction: outgoing_or_incoming
+        strength: float_or_null
+        evidence: list
+        notes: string_or_null
+    prerequisites:
+      item:
+        target_id: canonical_entity_id
+        level: required_or_recommended
+        rationale: string
+    learning_objectives: list_of_ids
+    knowledge_atoms: list_of_ids
+    skills: list_of_ids
+    reasoning_patterns: list_of_ids
+    task_variants: list_of_ids
+    difficulty_levels: list
+    language_forms: list
+    representations: list
+    verification_methods: list
+    provenance:
+      source_ids: list
+      license: string_or_null
+      extraction_method: string_or_null
+      synthetic: boolean
+      teacher_model: string_or_null
+      generator_prompt_version: string_or_null
+      verified: boolean
+      confidence: float_0_1
+
+classification_system:
+  required:
+    - taxonomy_id
+    - name
+    - kind
+    - nodes
+  fields:
+    taxonomy_id: stable_identifier
+    name: string
+    kind:
+      allowed:
+        - academic
+        - professional
+        - industry
+        - competency
+        - cognitive
+        - regulatory
+        - standards_based
+        - application_domain
+        - methodological
+        - custom
+    authority: string_or_null
+    version: string_or_null
+    root_nodes: list
+    nodes:
+      item:
+        node_id: string
+        label: string
+        parent_ids: list
+        child_ids: list
+        notes: string_or_null
+
+relation_types:
+  structural:
+    - is_a
+    - part_of
+    - contains
+    - subclass_of
+    - instance_of
+  dependency:
+    - prerequisite_of
+    - requires
+    - enables
+    - depends_on
+  causal:
+    - causes
+    - contributes_to
+    - prevents
+    - mitigates
+    - increases_risk_of
+    - decreases_risk_of
+  semantic:
+    - related_to
+    - analogous_to
+    - contrasts_with
+    - contradicts
+    - derived_from
+    - generalizes
+    - specializes
+  operational:
+    - used_by
+    - implemented_by
+    - measured_by
+    - detected_by
+    - controlled_by
+    - verified_by
+  pedagogical:
+    - teaches
+    - assesses
+    - demonstrates
+    - misconception_of
+    - counterexample_of
+
+knowledge_structure:
+  atom_types:
+    - definition
+    - fact
+    - property
+    - component
+    - taxonomy_statement
+    - relation
+    - mechanism
+    - process_step
+    - rule
+    - law
+    - constraint
+    - prerequisite
+    - exception
+    - failure_mode
+    - example
+    - counterexample
+    - evidence
+    - misconception
+    - boundary_condition
+
+learning_objective_levels:
+  - remember
+  - understand
+  - apply
+  - analyze
+  - evaluate
+  - create
+
+capability_dimensions:
+  skills:
+    - recall
+    - explanation
+    - extraction
+    - classification
+    - comparison
+    - calculation
+    - diagnosis
+    - planning
+    - decision_making
+    - problem_solving
+    - tool_use
+    - verification
+  reasoning_patterns:
+    - deduction
+    - induction
+    - abduction
+    - causal
+    - analogical
+    - temporal
+    - spatial
+    - quantitative
+    - constraint
+    - multi_hop
+    - counterfactual
+    - uncertainty
+  task_types:
+    - qa
+    - explain
+    - why_how
+    - compare
+    - solve
+    - complete
+    - debug
+    - critique
+    - rank
+    - predict
+    - generate
+    - tool_call
+    - structured_output
+
+negative_knowledge:
+  required_for_coverage: true
+  types:
+    - false_statement
+    - plausible_but_wrong
+    - common_misconception
+    - invalid_inference
+    - missing_prerequisite
+    - insufficient_information
+    - counterexample
+    - exception_case
+
+coverage_cube:
+  dimensions:
+    - science
+    - taxonomy_membership
+    - concept
+    - capability
+    - reasoning_pattern
+    - task_type
+    - difficulty
+    - language
+    - representation
+    - verification_method
+  goal: >-
+    Detect dataset holes at the intersection level, e.g. cryptography + causal_reasoning + advanced + Arabic.
+
+router_observability:
+  policy: >-
+    Taxonomy labels and science metadata are retained for analysis and telemetry only.
+    They must not hard-route tokens to experts unless a separate controlled experiment explicitly enables oracle routing.
+  metrics:
+    - expert_utilization_by_taxonomy
+    - expert_utilization_by_science
+    - expert_utilization_by_capability
+    - expert_utilization_by_reasoning_pattern
+    - entropy_by_taxonomy
+    - drop_rate_by_taxonomy
+    - specialization_mutual_information
+
+example_entity:
+  id: concept.cryptography.public_key
+  type: concept
+  name:
+    en: Public-key cryptography
+    ar: التشفير بالمفتاح العام
+  aliases:
+    - asymmetric cryptography
+  description: Cryptographic systems using distinct public and private keys.
+  memberships:
+    - taxonomy_id: academic.cs
+      node_id: cs.security.cryptography
+      path: [computer_science, security, cryptography]
+      relation: classified_as
+      confidence: 1.0
+      source: curriculum_mapping
+    - taxonomy_id: professional.cybersecurity
+      node_id: cyber.crypto
+      path: [cybersecurity, cryptography]
+      relation: classified_as
+      confidence: 1.0
+      source: professional_mapping
+    - taxonomy_id: competency.security_engineering
+      node_id: competency.key_management
+      path: [security_engineering, key_management]
+      relation: classified_as
+      confidence: 0.9
+      source: capability_mapping
+  relations:
+    - predicate: requires
+      target_id: concept.mathematics.modular_arithmetic
+      direction: outgoing
+      strength: 0.8
+      evidence: []
+      notes: foundational mathematical dependency
+    - predicate: used_by
+      target_id: concept.networking.tls
+      direction: outgoing
+      strength: 1.0
+      evidence: []
+      notes: null
+  provenance:
+    source_ids: []
+    license: null
+    extraction_method: manual_schema_seed
+    synthetic: false
+    teacher_model: null
+    generator_prompt_version: null
+    verified: false
+    confidence: 0.8

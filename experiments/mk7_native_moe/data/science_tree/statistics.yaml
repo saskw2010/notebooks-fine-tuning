@@ -1,0 +1,376 @@
+version: 0.1
+project: MK7NMoE
+science_id: statistics_probability
+science_name: Statistics and Probability
+scope: educational_scientific_and_ml_foundations
+purpose: >-
+  Machine-readable Science Schema V2 projection for building source-backed,
+  provenance-preserving datasets in statistics and probability. Domain labels
+  are metadata for coverage and router telemetry only; they must not hard-route
+  tokens to experts.
+
+metadata_schema:
+  required_fields:
+    - science
+    - discipline
+    - topic
+    - concept
+    - aki_type
+    - capability
+    - reasoning_pattern
+    - task_type
+    - source_id
+    - provenance
+    - origin
+    - teacher_generated
+    - synthetic
+    - verified
+  optional_fields:
+    - difficulty
+    - language
+    - prerequisites
+    - learning_objective
+    - quality_score
+    - representation
+    - verification_method
+
+science_tree:
+  - discipline_id: foundations
+    name: Statistical Foundations
+    topics:
+      - topic_id: data_and_measurement
+        name: Data and Measurement
+        concepts:
+          - concept_id: population_sample
+            name: Population and Sample
+            aki_types: [definition, comparison, relation, misconception]
+          - concept_id: parameter_statistic
+            name: Parameter and Statistic
+            aki_types: [definition, comparison, relation, example]
+          - concept_id: variable_types
+            name: Variable and Data Types
+            aki_types: [definition, taxonomy_statement, comparison, example]
+          - concept_id: measurement_scales
+            name: Measurement Scales
+            aki_types: [definition, taxonomy_statement, comparison, boundary_condition]
+      - topic_id: descriptive_statistics
+        name: Descriptive Statistics
+        concepts:
+          - concept_id: central_tendency
+            name: Mean Median and Mode
+            aki_types: [definition, comparison, calculation, misconception]
+          - concept_id: dispersion
+            name: Variance Standard Deviation and Range
+            aki_types: [definition, mechanism, calculation, comparison]
+          - concept_id: quantiles
+            name: Quantiles Percentiles and IQR
+            aki_types: [definition, calculation, diagnostic_signal]
+          - concept_id: graphical_summary
+            name: Graphical Summaries
+            aki_types: [tool_semantics, comparison, diagnostic_signal]
+
+  - discipline_id: probability
+    name: Probability Foundations
+    topics:
+      - topic_id: probability_rules
+        name: Probability Rules
+        concepts:
+          - concept_id: sample_space_events
+            name: Sample Spaces and Events
+            aki_types: [definition, relation, example]
+          - concept_id: conditional_probability
+            name: Conditional Probability
+            aki_types: [definition, mechanism, calculation, misconception]
+          - concept_id: independence
+            name: Independence
+            aki_types: [definition, comparison, misconception, counterexample]
+          - concept_id: bayes_rule
+            name: Bayes Rule
+            aki_types: [mechanism, calculation, causal, multi_hop]
+      - topic_id: random_variables
+        name: Random Variables
+        concepts:
+          - concept_id: discrete_continuous
+            name: Discrete and Continuous Random Variables
+            aki_types: [definition, comparison, taxonomy_statement]
+          - concept_id: expectation
+            name: Expectation
+            aki_types: [definition, calculation, property]
+          - concept_id: variance_random_variable
+            name: Variance of a Random Variable
+            aki_types: [definition, calculation, property]
+
+  - discipline_id: distributions
+    name: Probability Distributions
+    topics:
+      - topic_id: discrete_distributions
+        name: Discrete Distributions
+        concepts:
+          - concept_id: bernoulli
+            name: Bernoulli Distribution
+            aki_types: [definition, mechanism, example]
+          - concept_id: binomial
+            name: Binomial Distribution
+            aki_types: [definition, mechanism, calculation, boundary_condition]
+          - concept_id: poisson
+            name: Poisson Distribution
+            aki_types: [definition, mechanism, comparison, application]
+      - topic_id: continuous_distributions
+        name: Continuous Distributions
+        concepts:
+          - concept_id: normal
+            name: Normal Distribution
+            aki_types: [definition, property, mechanism, application]
+          - concept_id: t_distribution
+            name: Student t Distribution
+            aki_types: [definition, comparison, application, boundary_condition]
+          - concept_id: chi_square
+            name: Chi-square Distribution
+            aki_types: [definition, application, relation]
+          - concept_id: f_distribution
+            name: F Distribution
+            aki_types: [definition, application, relation]
+
+  - discipline_id: sampling
+    name: Sampling and Sampling Distributions
+    topics:
+      - topic_id: sampling_design
+        name: Sampling Design
+        concepts:
+          - concept_id: random_sampling
+            name: Random Sampling
+            aki_types: [principle, procedure, failure_mode]
+          - concept_id: sampling_bias
+            name: Sampling Bias
+            aki_types: [failure_mode, diagnostic_signal, mitigation]
+      - topic_id: sampling_distributions
+        name: Sampling Distributions
+        concepts:
+          - concept_id: standard_error
+            name: Standard Error
+            aki_types: [definition, mechanism, calculation]
+          - concept_id: central_limit_theorem
+            name: Central Limit Theorem
+            aki_types: [principle, mechanism, boundary_condition, misconception]
+
+  - discipline_id: estimation
+    name: Statistical Estimation
+    topics:
+      - topic_id: point_estimation
+        name: Point Estimation
+        concepts:
+          - concept_id: estimator_estimate
+            name: Estimator and Estimate
+            aki_types: [definition, comparison, relation]
+          - concept_id: bias_variance
+            name: Bias and Variance of Estimators
+            aki_types: [definition, comparison, tradeoff, misconception]
+      - topic_id: interval_estimation
+        name: Confidence Intervals
+        concepts:
+          - concept_id: confidence_interval
+            name: Confidence Interval
+            aki_types: [definition, mechanism, interpretation, misconception]
+          - concept_id: confidence_level
+            name: Confidence Level
+            aki_types: [definition, interpretation, misconception]
+          - concept_id: interval_width
+            name: Factors Affecting Confidence Interval Width
+            aki_types: [mechanism, causal, comparison]
+
+  - discipline_id: hypothesis_testing
+    name: Hypothesis Testing
+    topics:
+      - topic_id: test_framework
+        name: Statistical Test Framework
+        concepts:
+          - concept_id: null_alternative
+            name: Null and Alternative Hypotheses
+            aki_types: [definition, comparison, procedure]
+          - concept_id: significance_level
+            name: Significance Level Alpha
+            aki_types: [definition, interpretation, policy_rule]
+          - concept_id: type_i_ii_errors
+            name: Type I and Type II Errors
+            aki_types: [definition, comparison, tradeoff, misconception]
+          - concept_id: p_value
+            name: P-value
+            aki_types: [definition, interpretation, misconception, boundary_condition]
+          - concept_id: reject_vs_accept
+            name: Reject vs Fail to Reject
+            aki_types: [comparison, misconception, decision_rule]
+      - topic_id: common_tests
+        name: Common Statistical Tests
+        concepts:
+          - concept_id: one_sample_t
+            name: One-sample t Test
+            aki_types: [procedure, calculation, assumption, interpretation]
+          - concept_id: two_sample_t
+            name: Two-sample t Test
+            aki_types: [procedure, comparison, assumption]
+          - concept_id: chi_square_tests
+            name: Chi-square Tests
+            aki_types: [procedure, application, assumption]
+
+  - discipline_id: regression
+    name: Regression and Statistical Modeling
+    topics:
+      - topic_id: linear_regression
+        name: Linear Regression
+        concepts:
+          - concept_id: simple_linear_regression
+            name: Simple Linear Regression
+            aki_types: [definition, model, calculation, interpretation]
+          - concept_id: least_squares
+            name: Least Squares
+            aki_types: [mechanism, optimization, calculation]
+          - concept_id: residuals
+            name: Residuals and Diagnostics
+            aki_types: [definition, diagnostic_signal, failure_mode]
+          - concept_id: r_squared
+            name: R-squared
+            aki_types: [definition, interpretation, misconception]
+      - topic_id: multiple_regression
+        name: Multiple Regression
+        concepts:
+          - concept_id: multiple_linear_regression
+            name: Multiple Linear Regression
+            aki_types: [model, interpretation, assumption]
+          - concept_id: multicollinearity
+            name: Multicollinearity
+            aki_types: [failure_mode, diagnostic_signal, mitigation]
+
+  - discipline_id: experimental_design
+    name: Design of Experiments
+    topics:
+      - topic_id: experimental_principles
+        name: Experimental Design Principles
+        concepts:
+          - concept_id: randomization
+            name: Randomization
+            aki_types: [principle, procedure, mitigation]
+          - concept_id: replication
+            name: Replication
+            aki_types: [principle, mechanism, tradeoff]
+          - concept_id: blocking
+            name: Blocking
+            aki_types: [principle, mechanism, example]
+      - topic_id: factorial_designs
+        name: Factorial Designs
+        concepts:
+          - concept_id: factors_levels
+            name: Factors and Levels
+            aki_types: [definition, taxonomy_statement]
+          - concept_id: interaction
+            name: Interaction Effects
+            aki_types: [definition, mechanism, interpretation]
+
+  - discipline_id: quality_process
+    name: Statistical Process and Quality Methods
+    topics:
+      - topic_id: process_control
+        name: Statistical Process Control
+        concepts:
+          - concept_id: control_chart
+            name: Control Charts
+            aki_types: [tool_semantics, diagnostic_signal, procedure]
+          - concept_id: common_special_causes
+            name: Common and Special Causes
+            aki_types: [definition, comparison, diagnostic_signal]
+      - topic_id: process_capability
+        name: Process Capability
+        concepts:
+          - concept_id: capability_indices
+            name: Process Capability Indices
+            aki_types: [definition, calculation, interpretation]
+
+  - discipline_id: uncertainty
+    name: Measurement and Statistical Uncertainty
+    topics:
+      - topic_id: uncertainty_basics
+        name: Uncertainty Basics
+        concepts:
+          - concept_id: measurement_uncertainty
+            name: Measurement Uncertainty
+            aki_types: [definition, mechanism, interpretation]
+          - concept_id: uncertainty_propagation
+            name: Uncertainty Propagation
+            aki_types: [mechanism, calculation, multi_hop]
+
+  - discipline_id: ml_statistics
+    name: Statistical Foundations for Machine Learning
+    topics:
+      - topic_id: evaluation
+        name: Model Evaluation
+        concepts:
+          - concept_id: train_validation_test
+            name: Train Validation Test Separation
+            aki_types: [principle, procedure, failure_mode]
+          - concept_id: overfitting
+            name: Overfitting and Generalization
+            aki_types: [definition, failure_mode, diagnostic_signal, mitigation]
+          - concept_id: cross_validation
+            name: Cross-validation
+            aki_types: [procedure, mechanism, tradeoff]
+      - topic_id: probabilistic_modeling
+        name: Probabilistic Modeling
+        concepts:
+          - concept_id: likelihood
+            name: Likelihood
+            aki_types: [definition, mechanism, comparison]
+          - concept_id: maximum_likelihood
+            name: Maximum Likelihood Estimation
+            aki_types: [mechanism, optimization, calculation]
+
+relations:
+  - [standard_error, used_by, confidence_interval]
+  - [normal, used_by, confidence_interval]
+  - [t_distribution, used_by, one_sample_t]
+  - [null_alternative, required_by, p_value]
+  - [significance_level, governs, reject_vs_accept]
+  - [residuals, used_by, simple_linear_regression]
+  - [randomization, mitigates, confounding]
+  - [cross_validation, mitigates, overfitting]
+  - [probability, prerequisite_of, estimation]
+  - [estimation, prerequisite_of, hypothesis_testing]
+
+generation_policy:
+  per_concept_minimum_tasks:
+    explain: 2
+    qa: 3
+    compare: 1
+    calculation_or_reasoning: 2
+    error_detection: 1
+    interpretation: 2
+  language_mix:
+    english: 0.55
+    arabic: 0.25
+    bilingual: 0.20
+  difficulty_mix:
+    foundation: 0.35
+    intermediate: 0.40
+    advanced: 0.25
+  source_policy:
+    require_provenance: true
+    require_deduplication: true
+    teacher_generated_must_be_explicit: true
+    verification_required_for_eval_split: true
+  split_policy:
+    train: 0.90
+    validation: 0.05
+    test: 0.05
+    split_by_source_family: true
+    prevent_near_duplicate_cross_split: true
+
+router_research_policy:
+  domain_labels_are_metadata_only: true
+  hard_domain_to_expert_mapping: false
+  telemetry_dimensions:
+    - science
+    - discipline
+    - topic
+    - capability
+    - reasoning_pattern
+    - task_type
+    - language
+    - difficulty

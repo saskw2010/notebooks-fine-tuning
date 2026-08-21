@@ -1,0 +1,147 @@
+name: MK7 Kaggle GPU Run
+
+on:
+  push:
+    branches:
+      - exp/mk7-native-moe-streaming-v0
+    paths:
+      - 'experiments/mk7_native_moe/**'
+      - '.github/workflows/mk7-kaggle.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: mk7-kaggle-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kaggle-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      KERNEL_SLUG: mk7-native-moe-gpu
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Kaggle secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${KAGGLE_API_TOKEN:-}" || { echo 'Missing GitHub secret KAGGLE_API_TOKEN'; exit 1; }
+          test -n "${KAGGLE_USERNAME:-}" || { echo 'Missing GitHub secret KAGGLE_USERNAME'; exit 1; }
+
+      - name: Install Kaggle CLI
+        run: python -m pip install --upgrade kaggle
+
+      - name: Build Kaggle kernel package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .kaggle_mk7
+          mkdir -p .kaggle_mk7
+
+          cat > .kaggle_mk7/runner.py <<PY
+          import pathlib
+          import subprocess
+          import sys
+          import time
+
+          REPO = "https://github.com/${GITHUB_REPOSITORY}.git"
+          SHA = "${GITHUB_SHA}"
+          ROOT = pathlib.Path("/kaggle/working/notebooks-fine-tuning")
+          LOG = pathlib.Path("/kaggle/working/mk7_run.log")
+          SUMMARY = pathlib.Path("/kaggle/working/mk7_summary.txt")
+
+          def run(cmd, cwd=None):
+              print("+", " ".join(cmd), flush=True)
+              with LOG.open("a", encoding="utf-8") as f:
+                  p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+                  assert p.stdout is not None
+                  for line in p.stdout:
+                      print(line, end="", flush=True)
+                      f.write(line)
+                  code = p.wait()
+              if code != 0:
+                  raise subprocess.CalledProcessError(code, cmd)
+
+          started = time.time()
+          try:
+              run(["nvidia-smi"])
+              run([sys.executable, "-c", "import torch; print('torch', torch.__version__); print('cuda', torch.cuda.is_available()); print('gpu', torch.cuda.get_device_name(0)); print('cc', torch.cuda.get_device_capability(0)); assert torch.cuda.get_device_capability(0)[0] >= 7, 'GPU compute capability < 7.0 is unsupported by current Kaggle PyTorch image'"])
+              run(["git", "clone", "--no-checkout", REPO, str(ROOT)])
+              run(["git", "fetch", "origin", SHA, "--depth", "1"], cwd=ROOT)
+              run(["git", "checkout", "--detach", SHA], cwd=ROOT)
+              exp = ROOT / "experiments" / "mk7_native_moe"
+              run([sys.executable, "train_lm.py", "--preset", "smoke", "--steps", "20", "--batch-size", "4"], cwd=exp)
+              run([sys.executable, "train_lm.py", "--preset", "research-30m", "--steps", "100", "--batch-size", "2"], cwd=exp)
+              status = "PASS"
+          except Exception as e:
+              status = f"FAIL: {type(e).__name__}: {e}"
+              raise
+          finally:
+              elapsed = time.time() - started
+              SUMMARY.write_text(f"commit={SHA}\nstatus={status}\nelapsed_seconds={elapsed:.1f}\n", encoding="utf-8")
+              print(SUMMARY.read_text(), flush=True)
+          PY
+
+          cat > .kaggle_mk7/kernel-metadata.json <<JSON
+          {
+            "id": "${KAGGLE_USERNAME}/${KERNEL_SLUG}",
+            "title": "MK7 Native MoE GPU",
+            "code_file": "runner.py",
+            "language": "python",
+            "kernel_type": "script",
+            "is_private": "true",
+            "enable_gpu": "true",
+            "enable_internet": "true",
+            "machine_shape": "NvidiaTeslaT4",
+            "dataset_sources": [],
+            "competition_sources": [],
+            "kernel_sources": [],
+            "model_sources": []
+          }
+          JSON
+
+      - name: Push and run on Kaggle T4
+        shell: bash
+        run: |
+          set -euo pipefail
+          kaggle kernels push -p .kaggle_mk7 --accelerator NvidiaTeslaT4 --timeout 3600
+
+      - name: Wait for Kaggle run
+        shell: bash
+        run: |
+          set -euo pipefail
+          KERNEL="${KAGGLE_USERNAME}/${KERNEL_SLUG}"
+          mkdir -p kaggle-output
+          final=""
+          for i in $(seq 1 120); do
+            status="$(kaggle kernels status "$KERNEL" 2>&1 || true)"
+            echo "$status"
+            lower="$(printf '%s' "$status" | tr '[:upper:]' '[:lower:]')"
+            if echo "$lower" | grep -Eq 'complete|success'; then
+              final="success"
+              break
+            fi
+            if echo "$lower" | grep -Eq 'error|failed|cancel'; then
+              final="failed"
+              break
+            fi
+            sleep 30
+          done
+          kaggle kernels output "$KERNEL" -p kaggle-output -o || true
+          if [ "$final" != "success" ]; then
+            echo "Kaggle run did not complete successfully: ${final:-timeout}"
+            exit 1
+          fi
+
+      - name: Upload Kaggle outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mk7-kaggle-output-${{ github.run_number }}
+          path: kaggle-output
+          if-no-files-found: warn
