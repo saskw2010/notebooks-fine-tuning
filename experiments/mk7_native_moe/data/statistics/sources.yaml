@@ -1,0 +1,32 @@
+version: 0.1
+project: MK7NMoE
+science: statistics_probability
+sources:
+  - source_id: nist_sematech_handbook
+    title: NIST/SEMATECH Engineering Statistics Handbook
+    authority: National Institute of Standards and Technology (NIST)
+    source_type: authoritative_web_handbook
+    url: https://www.itl.nist.gov/div898/handbook/
+    usage_note: >-
+      NIST publications and web information are generally public information unless
+      separately marked as copyrighted. Preserve source attribution and section URLs.
+    provenance_policy: section_url_required
+    allowed_for_seed: true
+    preferred_for_eval: true
+
+  - source_id: nist_copyright_policy
+    title: NIST Copyrights and Disclaimers
+    authority: National Institute of Standards and Technology (NIST)
+    source_type: usage_policy
+    url: https://www.nist.gov/copyrights-disclaimers
+    usage_note: >-
+      Used to record provenance/licensing policy; not itself a scientific training source.
+    allowed_for_seed: false
+
+source_rules:
+  require_source_id: true
+  require_source_section: true
+  require_provenance: true
+  require_verification_for_eval: true
+  do_not_use_sources_with_explicit_llm_training_prohibitions: true
+  do_not_assume_cc_license_implies_llm_training_permission: true
